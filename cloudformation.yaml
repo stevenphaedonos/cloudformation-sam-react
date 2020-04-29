@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  UnauthenticatedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub:
+          - "${StackName}-unauthenticated-role"
+          - StackName: !Ref "AWS::StackName"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref AWS::StackName
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName:
+            Fn::Sub:
+              - "${StackName}-unauthenticated-policy"
+              - StackName: !Ref "AWS::StackName"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - mobileanalytics:PutEvents
+                  - cognito-sync:*
+                Resource: "*"
+  AuthenticatedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub:
+          - "${StackName}-authenticated-role"
+          - StackName: !Ref "AWS::StackName"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref AWS::StackName
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName:
+            Fn::Sub:
+              - "${StackName}-authenticated-policy"
+              - StackName: !Ref "AWS::StackName"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - mobileanalytics:PutEvents
+                  - cognito-sync:*
+                  - cognito-identity:*
+                Resource: "*"
+
+  DevUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName:
+        Fn::Sub:
+          - "${StackName}-dev"
+          - StackName: !Ref "AWS::StackName"
+      UserPoolTags:
+        ProjectName: !Ref AWS::StackName
+        Environment: dev
+  DevUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName:
+        Fn::Sub:
+          - "${StackName}-dev"
+          - StackName: !Ref "AWS::StackName"
+      UserPoolId: !Ref DevUserPool
+  DevIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName:
+        Fn::Sub:
+          - "${StackName}-dev"
+          - StackName: !Ref "AWS::StackName"
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ProviderName: !GetAtt DevUserPool.ProviderName
+          ClientId: !Ref DevUserPoolClient
+  DevIdentityPoolRoleAttachment: 
+    Type: AWS::Cognito::IdentityPoolRoleAttachment 
+    Properties: 
+      IdentityPoolId: !Ref DevIdentityPool
+      Roles: 
+        "authenticated": !GetAtt AuthenticatedRole.Arn 
+        "unauthenticated": !GetAtt UnauthenticatedRole.Arn
+  DevAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties: 
+      GroupName: admin
+      UserPoolId: !Ref DevUserPool
+
+Outputs:
+  DevUserPoolId:
+    Value: !Ref DevUserPool
+  DevUserPoolClient:
+    Value: !Ref DevUserPoolClient
+  DevIdentityPoolId:
+    Value: !Ref DevIdentityPool
