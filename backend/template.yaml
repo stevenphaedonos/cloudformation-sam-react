@@ -18,9 +18,6 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub "${AWS::StackName}-unauthenticated-role"
-      Tags:
-        - Key: ProjectName
-          Value: !Ref AWS::StackName
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -42,9 +39,6 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub "${AWS::StackName}-authenticated-role"
-      Tags:
-        - Key: ProjectName
-          Value: !Ref AWS::StackName
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -68,8 +62,6 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub "${AWS::StackName}-user-pool"
-      UserPoolTags:
-        ProjectName: !Ref AWS::StackName
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
