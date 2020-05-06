@@ -25,6 +25,11 @@ Resources:
             Principal:
               Federated: cognito-identity.amazonaws.com
             Action: ["sts:AssumeRole"]
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud: !Ref IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: unauthenticated
       Policies:
         - PolicyName: !Sub "${AWS::StackName}-unauthenticated-policy"
           PolicyDocument:
@@ -45,7 +50,12 @@ Resources:
           - Effect: Allow
             Principal:
               Federated: cognito-identity.amazonaws.com
-            Action: ["sts:AssumeRole"]
+            Action: ["sts:AssumeRoleWithWebIdentity"]
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud: !Ref IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: authenticated
       Policies:
         - PolicyName: !Sub "${AWS::StackName}-authenticated-policy"
           PolicyDocument:
