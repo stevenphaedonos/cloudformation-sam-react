@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  EnvType:
+    Type: String
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+    Default: dev
+    ConstraintDescription: must specify dev, stage, or prod.
+  FrontendUrl:
+    Type: String
+
+Resources:
+  UnauthenticatedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-unauthenticated-role"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref AWS::StackName
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-unauthenticated-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - mobileanalytics:PutEvents
+                  - cognito-sync:*
+                Resource: "*"
+  AuthenticatedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-authenticated-role"
+      Tags:
+        - Key: ProjectName
+          Value: !Ref AWS::StackName
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-authenticated-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - mobileanalytics:PutEvents
+                  - cognito-sync:*
+                  - cognito-identity:*
+                Resource: "*"
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${AWS::StackName}-user-pool"
+      UserPoolTags:
+        ProjectName: !Ref AWS::StackName
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${AWS::StackName}-client"
+      UserPoolId: !Ref UserPool
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: !Sub "${AWS::StackName}-identity-pool"
+      AllowUnauthenticatedIdentities: False
+      CognitoIdentityProviders:
+        - ProviderName: !GetAtt UserPool.ProviderName
+          ClientId: !Ref UserPoolClient
+  IdentityPoolRoleAttachment:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref IdentityPool
+      Roles:
+        "authenticated": !GetAtt AuthenticatedRole.Arn
+        "unauthenticated": !GetAtt UnauthenticatedRole.Arn
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: admin
+      UserPoolId: !Ref UserPool
+
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref EnvType
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+      Cors:
+        AllowHeaders: "'*'"
+        AllowOrigin: !Sub
+          - "'${FrontendUrl}'"
+          - FrontendUrl: FrontendUrl
+        AllowCredentials: True
+
+  UserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.user
+      Runtime: python3.8
+      CodeUri: ./src
+      Environment:
+        Variables:
+          FRONTEND_URL: !Ref FrontendUrl
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /user
+            Method: get
+  AdminFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.admin
+      Runtime: python3.8
+      CodeUri: ./src
+      Environment:
+        Variables:
+          FRONTEND_URL: !Ref FrontendUrl
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /admin
+            Method: get
+
+Outputs:
+  Region:
+    Description: "Region"
+    Value: !Ref AWS::Region
+  ApiId:
+    Description: "API ID"
+    Value: !Ref Api
+  CognitoUserPoolId:
+    Description: "Cognito User Pool Id"
+    Value: !Ref UserPool
+  CognitoUserPoolClientId:
+    Description: "Cognito User Pool Client Id"
+    Value: !Ref UserPoolClient
+  CognitoIdentityPoolId:
+    Description: "Cognito Identity Pool Id"
+    Value: !Ref IdentityPool
