@@ -30,6 +30,7 @@ Resources:
         Authorizers:
           CognitoAuthorizer:
             UserPoolArn: !Ref UserPoolArn
+        AddDefaultAuthorizerToCorsPreflight: False
       Cors:
         AllowHeaders: "'*'"
         AllowOrigin: !Sub
