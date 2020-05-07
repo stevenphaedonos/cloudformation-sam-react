@@ -34,7 +34,7 @@ Resources:
         AllowHeaders: "'*'"
         AllowOrigin: !Sub
           - "'${FrontendUrl}'"
-          - FrontendUrl: FrontendUrl
+          - FrontendUrl: !Ref FrontendUrl
         AllowCredentials: True
       Domain:
         CertificateArn: !Ref AcmCertificateArn
