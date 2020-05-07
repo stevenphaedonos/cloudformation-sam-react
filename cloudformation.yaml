@@ -192,6 +192,37 @@ Resources:
                 Version: 1
               Configuration:
                 ProjectName: !Ref CodeBuildBackendStage
+        - Name: Prod
+          Actions:
+            - Name: ApprovalStage
+              RunOrder: 1
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: 1
+            - Name: Frontend
+              RunOrder: 2
+              InputArtifacts:
+                - Name: source
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName: !Ref CodeBuildFrontendProd
+            - Name: Backend
+              RunOrder: 2
+              InputArtifacts:
+                - Name: source
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName: !Ref CodeBuildBackendProd
   CodeBuildFrontendStage:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -258,6 +289,72 @@ Resources:
             Value: !Ref AcmCertificateArn
           - Name: user_pool_arn
             Value: !GetAtt UserPool.Arn
+  CodeBuildFrontendProd:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-frontend-prod"
+      ServiceRole: !GetAtt DeploymentRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: pipeline/frontend.yml
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: project_bucket
+            Value: !Ref ProjectBucket
+          - Name: cloudfront_distro
+            Value: !Ref FrontendProd
+          - Name: stage
+            Value: prod
+          - Name: REACT_APP_REGION
+            Value: !Ref AWS::Region
+          - Name: REACT_APP_USER_POOL_ID
+            Value: !Ref UserPool
+          - Name: REACT_APP_USER_POOL_CLIENT
+            Value: !Ref UserPoolClient
+          - Name: REACT_APP_IDENTITY_POOL_ID
+            Value: !Ref IdentityPool
+          - Name: REACT_APP_BACKEND_URL
+            Value: !Sub
+              - "https://api.${Domain}"
+              - Domain: !Ref Domain
+  CodeBuildBackendProd:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-backend-prod"
+      ServiceRole: !GetAtt DeploymentRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: pipeline/backend.yml
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: api_stack_name
+            Value: !Sub "${AWS::StackName}-api"
+          - Name: project_bucket
+            Value: !Ref ProjectBucket
+          - Name: stage
+            Value: prod
+          - Name: frontend_url
+            Value: !Sub
+              - "https://${Domain}"
+              - Domain: !Ref Domain
+          - Name: backend_domain
+            Value: !Sub
+              - "api.${Domain}"
+              - Domain: !Ref Domain
+          - Name: acm_certificate_arn
+            Value: !Ref AcmCertificateArn
+          - Name: user_pool_arn
+            Value: !GetAtt UserPool.Arn
 
   OriginAccessIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
@@ -317,6 +414,51 @@ Resources:
           - DomainName: !GetAtt ProjectBucket.DomainName
             Id: !Ref ProjectBucket
             OriginPath: /frontend/stage
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${OriginAccessIdentity}"
+        Restrictions:
+          GeoRestriction:
+            RestrictionType: none
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          SslSupportMethod: sni-only
+  FrontendProd:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref Domain
+        DefaultCacheBehavior:
+          AllowedMethods: ["GET", "HEAD"]
+          CachedMethods: ["GET", "HEAD"]
+          TargetOriginId: !Ref ProjectBucket
+          ForwardedValues:
+            QueryString: False
+            Headers:
+              - Origin
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+          MinTTL: 0
+          DefaultTTL: 3600
+          MaxTTL: 86400
+          Compress: True
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 300
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCachingMinTTL: 300
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        DefaultRootObject: index.html
+        Enabled: True
+        IPV6Enabled: True
+        Origins:
+          - DomainName: !GetAtt ProjectBucket.DomainName
+            Id: !Ref ProjectBucket
+            OriginPath: /frontend/prod
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${OriginAccessIdentity}"
         Restrictions:
