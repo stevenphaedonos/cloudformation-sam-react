@@ -3,13 +3,119 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   ProjectBucketName:
     Type: String
-    Default: testing123-project-bucket
+  Domain:
+    Type: String
+  GitOwner:
+    Type: String
+  GitRepo:
+    Type: String
+  GitBranch:
+    Type: String
 
 Resources:
   ProjectBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Ref ProjectBucketName
+
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-deployment-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+                - codepipeline.amazonaws.com
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-deployment-policy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !GetAtt ProjectBucket.Arn
+                  - !Sub
+                    - "${BucketArn}/*"
+                    - BucketArn: !GetAtt ProjectBucket.Arn
+              - Effect: Allow
+                Action:
+                  - codebuild:*
+                  - logs:*
+                  - cloudformation:*
+                  - cloudfront:*
+                  - iam:*
+                  - lambda:*
+                  - apigateway:*
+                  - route53:*
+                  - acm:*
+                Resource: "*"
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ProjectBucket
+      Name: !Sub "${AWS::StackName}-deployment-pipeline"
+      RoleArn: !GetAtt DeploymentRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              Configuration:
+                Owner: !Ref GitOwner
+                Repo: !Ref GitRepo
+                Branch: !Ref GitBranch
+                OAuthToken: "{{resolve:secretsmanager:GITHUB_TOKEN}}"
+              OutputArtifacts:
+                - Name: source
+        - Name: Stage
+          Actions:
+            - Name: Backend
+              InputArtifacts:
+                - Name: source
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName: !Ref CodeBuildBackendStage
+  CodeBuildBackendStage:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-backend-stage"
+      ServiceRole: !GetAtt DeploymentRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: pipeline/backend.yml
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: api_stack_name
+            Value: !Sub "${AWS::StackName}-api"
+          - Name: project_bucket
+            Value: !Ref ProjectBucket
+          - Name: stage
+            Value: stage
+          - Name: frontend_url
+            Value: !Sub
+              - "https://stage.${Domain}"
+              - Domain: !Ref Domain
 
 Outputs:
   ProjectBucket:

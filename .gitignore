@@ -13,8 +13,5 @@
 .DS_Store
 Thumbs.db
 
-# environment files
-.env
-
 # build files
 cloudformation.packaged.yaml

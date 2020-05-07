@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+       python: 3.8
+    commands:
+      - pip install aws-sam-cli==0.48.0
+  pre_build:
+    commands:
+      - (cd backend; sam build)
+  build:
+    commands:
+      - (cd backend; sam deploy --stack-name $api_stack_name --s3-bucket=$project_bucket --s3-prefix deployments --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvType=$stage FrontendUrl=$frontend_url)
