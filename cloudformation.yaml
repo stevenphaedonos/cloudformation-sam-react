@@ -11,6 +11,8 @@ Parameters:
     Type: String
   GitBranch:
     Type: String
+  AcmCertificateArn:
+    Type: String
 
 Resources:
   ProjectBucket:
@@ -101,7 +103,7 @@ Resources:
     Properties:
       GroupName: admin
       UserPoolId: !Ref UserPool
-    
+
   DeploymentRole:
     Type: AWS::IAM::Role
     Properties:
@@ -165,6 +167,16 @@ Resources:
                 - Name: source
         - Name: Stage
           Actions:
+            - Name: Frontend
+              InputArtifacts:
+                - Name: source
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName: !Ref CodeBuildFrontendStage
             - Name: Backend
               InputArtifacts:
                 - Name: source
@@ -175,6 +187,39 @@ Resources:
                 Version: 1
               Configuration:
                 ProjectName: !Ref CodeBuildBackendStage
+  CodeBuildFrontendStage:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-frontend-stage"
+      ServiceRole: !GetAtt DeploymentRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: pipeline/frontend.yml
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: project_bucket
+            Value: !Ref ProjectBucket
+          - Name: cloudfront_distro
+            Value: !Ref FrontendStage
+          - Name: stage
+            Value: stage
+          - Name: REACT_APP_REGION
+            Value: !Ref AWS::Region
+          - Name: REACT_APP_USER_POOL_ID
+            Value: !Ref UserPool
+          - Name: REACT_APP_USER_POOL_CLIENT
+            Value: !Ref UserPoolClient
+          - Name: REACT_APP_IDENTITY_POOL_ID
+            Value: !Ref IdentityPool
+          - Name: REACT_APP_BACKEND_URL
+            Value: !Sub
+              - "https://api.stage.${Domain}"
+              - Domain: !Ref Domain
   CodeBuildBackendStage:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -200,8 +245,67 @@ Resources:
             Value: !Sub
               - "https://stage.${Domain}"
               - Domain: !Ref Domain
+          - Name: backend_domain
+            Value: !Sub
+              - "api.stage.${Domain}"
+              - Domain: !Ref Domain
+          - Name: acm_certificate_arn
+            Value: !Ref AcmCertificateArn
           - Name: user_pool_arn
             Value: !GetAtt UserPool.Arn
+
+  OriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub "${AWS::StackName}-access-identity"
+  FrontendStage:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Sub:
+            - "stage.${Domain}"
+            - Domain: !Ref Domain
+        DefaultCacheBehavior:
+          AllowedMethods: ["GET", "HEAD"]
+          CachedMethods: ["GET", "HEAD"]
+          TargetOriginId: !Ref ProjectBucket
+          ForwardedValues:
+            QueryString: False
+            Headers:
+              - Origin
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+          MinTTL: 0
+          DefaultTTL: 3600
+          MaxTTL: 86400
+          Compress: True
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 300
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCachingMinTTL: 300
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        DefaultRootObject: index.html
+        Enabled: True
+        IPV6Enabled: True
+        Origins:
+          - DomainName: !GetAtt ProjectBucket.DomainName
+            Id: !Ref ProjectBucket
+            OriginPath: /frontend/stage
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${OriginAccessIdentity}"
+        Restrictions:
+          GeoRestriction:
+            RestrictionType: none
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          SslSupportMethod: sni-only
 
 Outputs:
   Region:

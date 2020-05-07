@@ -12,6 +12,10 @@ Parameters:
     ConstraintDescription: must specify dev, stage, or prod.
   FrontendUrl:
     Type: String
+  BackendDomain:
+    Type: String
+  AcmCertificateArn:
+    Type: String
   UserPoolArn:
     Type: String
 
@@ -32,6 +36,9 @@ Resources:
           - "'${FrontendUrl}'"
           - FrontendUrl: FrontendUrl
         AllowCredentials: True
+      Domain:
+        CertificateArn: !Ref AcmCertificateArn
+        DomainName: !Ref BackendDomain
 
   UserFunction:
     Type: AWS::Serverless::Function
