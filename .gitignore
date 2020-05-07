@@ -13,8 +13,8 @@
 .DS_Store
 Thumbs.db
 
-# development files
-local.env
+# environment files
+.env
 
 # build files
 cloudformation.packaged.yaml

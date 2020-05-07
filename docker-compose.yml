@@ -18,8 +18,7 @@ services:
     environment:
       - BROWSER=none
       - REACT_APP_BACKEND_URL=http://localhost:5000
-    env_file:
-      - local.env
+      - API_STACK_NAME=$api_stack_name
     ports:
       - "3000:3000"
     volumes:
