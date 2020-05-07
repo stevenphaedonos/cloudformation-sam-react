@@ -11,4 +11,4 @@ phases:
       - (cd backend; sam build)
   build:
     commands:
-      - (cd backend; sam deploy --stack-name $api_stack_name --s3-bucket=$project_bucket --s3-prefix deployments --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvType=$stage FrontendUrl=$frontend_url)
+      - (cd backend; sam deploy --stack-name $api_stack_name --s3-bucket=$project_bucket --s3-prefix deployments --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvType=$stage FrontendUrl=$frontend_url UserPoolArn=$user_pool_arn)

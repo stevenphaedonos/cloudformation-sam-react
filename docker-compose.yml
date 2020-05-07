@@ -4,13 +4,17 @@ services:
   backend:
     restart: always
     build: ./backend
+    environment:
+      - basedir=$PWD/backend
+      - frontend_url=http://localhost:3000
+      - stack_name=$stack_name
     ports:
       - "5000:5000"
     volumes:
       - ./backend:/backend
       - ~/.aws:/root/.aws
       - /var/run/docker.sock:/var/run/docker.sock
-    command: sam local start-api --docker-volume-basedir "$PWD/backend" --template-file /backend/template.yaml --host 0.0.0.0 --port 5000 --parameter-overrides ParameterKey=FrontendUrl,ParameterValue=http://localhost:3000
+    entrypoint: sh /backend/entrypoint.sh
 
   frontend:
     restart: always
@@ -18,7 +22,7 @@ services:
     environment:
       - BROWSER=none
       - REACT_APP_BACKEND_URL=http://localhost:5000
-      - API_STACK_NAME=$api_stack_name
+      - stack_name=$stack_name
     ports:
       - "3000:3000"
     volumes:

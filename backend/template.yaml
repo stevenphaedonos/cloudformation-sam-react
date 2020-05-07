@@ -12,92 +12,10 @@ Parameters:
     ConstraintDescription: must specify dev, stage, or prod.
   FrontendUrl:
     Type: String
+  UserPoolArn:
+    Type: String
 
 Resources:
-  UnauthenticatedRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "${AWS::StackName}-unauthenticated-role"
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Federated: cognito-identity.amazonaws.com
-            Action: ["sts:AssumeRole"]
-            Condition:
-              StringEquals:
-                cognito-identity.amazonaws.com:aud: !Ref IdentityPool
-              ForAnyValue:StringLike:
-                cognito-identity.amazonaws.com:amr: unauthenticated
-      Policies:
-        - PolicyName: !Sub "${AWS::StackName}-unauthenticated-policy"
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - mobileanalytics:PutEvents
-                  - cognito-sync:*
-                Resource: "*"
-  AuthenticatedRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "${AWS::StackName}-authenticated-role"
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Federated: cognito-identity.amazonaws.com
-            Action: ["sts:AssumeRoleWithWebIdentity"]
-            Condition:
-              StringEquals:
-                cognito-identity.amazonaws.com:aud: !Ref IdentityPool
-              ForAnyValue:StringLike:
-                cognito-identity.amazonaws.com:amr: authenticated
-      Policies:
-        - PolicyName: !Sub "${AWS::StackName}-authenticated-policy"
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - mobileanalytics:PutEvents
-                  - cognito-sync:*
-                  - cognito-identity:*
-                Resource: "*"
-
-  UserPool:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      UserPoolName: !Sub "${AWS::StackName}-user-pool"
-  UserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      ClientName: !Sub "${AWS::StackName}-client"
-      UserPoolId: !Ref UserPool
-  IdentityPool:
-    Type: AWS::Cognito::IdentityPool
-    Properties:
-      IdentityPoolName: !Sub "${AWS::StackName}-identity-pool"
-      AllowUnauthenticatedIdentities: False
-      CognitoIdentityProviders:
-        - ProviderName: !GetAtt UserPool.ProviderName
-          ClientId: !Ref UserPoolClient
-  IdentityPoolRoleAttachment:
-    Type: AWS::Cognito::IdentityPoolRoleAttachment
-    Properties:
-      IdentityPoolId: !Ref IdentityPool
-      Roles:
-        "authenticated": !GetAtt AuthenticatedRole.Arn
-        "unauthenticated": !GetAtt UnauthenticatedRole.Arn
-  AdminGroup:
-    Type: AWS::Cognito::UserPoolGroup
-    Properties:
-      GroupName: admin
-      UserPoolId: !Ref UserPool
-
   Api:
     Type: AWS::Serverless::Api
     Properties:
@@ -107,7 +25,7 @@ Resources:
         DefaultAuthorizer: CognitoAuthorizer
         Authorizers:
           CognitoAuthorizer:
-            UserPoolArn: !GetAtt UserPool.Arn
+            UserPoolArn: !Ref UserPoolArn
       Cors:
         AllowHeaders: "'*'"
         AllowOrigin: !Sub
@@ -155,12 +73,3 @@ Outputs:
   ApiId:
     Description: "API ID"
     Value: !Ref Api
-  CognitoUserPoolId:
-    Description: "Cognito User Pool Id"
-    Value: !Ref UserPool
-  CognitoUserPoolClientId:
-    Description: "Cognito User Pool Client Id"
-    Value: !Ref UserPoolClient
-  CognitoIdentityPoolId:
-    Description: "Cognito Identity Pool Id"
-    Value: !Ref IdentityPool
