@@ -19,6 +19,11 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Ref ProjectBucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
 
   UnauthenticatedRole:
     Type: AWS::IAM::Role
@@ -259,6 +264,20 @@ Resources:
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Sub "${AWS::StackName}-access-identity"
+  ProjectBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ProjectBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: !Sub
+              - "${BucketArn}/frontend/*"
+              - BucketArn: !GetAtt ProjectBucket.Arn
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OriginAccessIdentity}"
   FrontendStage:
     Type: AWS::CloudFront::Distribution
     Properties:
