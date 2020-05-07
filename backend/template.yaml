@@ -39,6 +39,7 @@ Resources:
       Domain:
         CertificateArn: !Ref AcmCertificateArn
         DomainName: !Ref BackendDomain
+        EndpointConfiguration: EDGE
 
   UserFunction:
     Type: AWS::Serverless::Function

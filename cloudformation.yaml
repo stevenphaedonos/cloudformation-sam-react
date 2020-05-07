@@ -264,7 +264,7 @@ Resources:
     Properties:
       DistributionConfig:
         Aliases:
-          - !Sub:
+          - !Sub
             - "stage.${Domain}"
             - Domain: !Ref Domain
         DefaultCacheBehavior:
