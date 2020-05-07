@@ -272,7 +272,7 @@ Resources:
         Image: aws/codebuild/standard:4.0
         EnvironmentVariables:
           - Name: api_stack_name
-            Value: !Sub "${AWS::StackName}-api"
+            Value: !Sub "${AWS::StackName}-api-stage"
           - Name: project_bucket
             Value: !Ref ProjectBucket
           - Name: stage
@@ -338,7 +338,7 @@ Resources:
         Image: aws/codebuild/standard:4.0
         EnvironmentVariables:
           - Name: api_stack_name
-            Value: !Sub "${AWS::StackName}-api"
+            Value: !Sub "${AWS::StackName}-api-prod"
           - Name: project_bucket
             Value: !Ref ProjectBucket
           - Name: stage
