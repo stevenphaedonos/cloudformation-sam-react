@@ -13,7 +13,7 @@ Amplify.configure({
     identityPoolId: process.env.REACT_APP_IDENTITY_POOL_ID,
     region: process.env.REACT_APP_REGION,
     userPoolId: process.env.REACT_APP_USER_POOL_ID,
-    userPoolWebClientId: process.env.REACT_APP_USER_POOL_CLIENT
+    userPoolWebClientId: process.env.REACT_APP_USER_POOL_CLIENT,
   },
   API: {
     endpoints: [
@@ -23,13 +23,13 @@ Amplify.configure({
         custom_header: async () => {
           return {
             Authorization: (await Auth.currentSession())
-              .getAccessToken()
-              .getJwtToken()
+              .getIdToken()
+              .getJwtToken(),
           };
-        }
-      }
-    ]
-  }
+        },
+      },
+    ],
+  },
 });
 
 ReactDOM.render(
