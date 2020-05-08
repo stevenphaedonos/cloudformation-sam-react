@@ -32,10 +32,10 @@ Resources:
             UserPoolArn: !Ref UserPoolArn
         AddDefaultAuthorizerToCorsPreflight: False
       Cors:
-        AllowHeaders: "'*'"
         AllowOrigin: !Sub
           - "'${FrontendUrl}'"
           - FrontendUrl: !Ref FrontendUrl
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
         AllowCredentials: True
       Domain:
         CertificateArn: !Ref AcmCertificateArn
