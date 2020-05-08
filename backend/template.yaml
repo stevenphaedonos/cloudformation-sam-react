@@ -41,6 +41,26 @@ Resources:
         CertificateArn: !Ref AcmCertificateArn
         DomainName: !Ref BackendDomain
         EndpointConfiguration: EDGE
+  GatewayResponseDefault4XX:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: !Sub
+          - "'${FrontendUrl}'"
+          - FrontendUrl: !Ref FrontendUrl
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      ResponseType: DEFAULT_4XX
+      RestApiId: !Ref Api
+  GatewayResponseDefault5XX:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: !Sub
+          - "'${FrontendUrl}'"
+          - FrontendUrl: !Ref FrontendUrl
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      ResponseType: DEFAULT_5XX
+      RestApiId: !Ref Api
 
   UserFunction:
     Type: AWS::Serverless::Function
