@@ -19,18 +19,20 @@
 
 ### CloudFormation
 
-- The following parameters must be provided in `.env`
+- The following parameters should be provided in `.env`
 - Refer to [`.env.dist`](env.dist) for examples
 
-| Parameter           | Description                                                                                                                                                                                                                         |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| stack_name          | - Uniquely identifying name of the project <br/> - The following 3 CloudFormation stacks will be created: <br/> `${stack-name}`, `${stack-name}-api-stage`, `${stack-name}-api-prod`                                                |
-| domain              | - Domain name of the project (e.g. example.com) <br/> - The following 4 domains are intended to become web-accessible: <br/> `https://${domain}`, `https://api.${domain}`, `https://stage.${domain}`, `https://api.stage.${domain}` |
-| project_bucket      | Location to store project files (cloudformation packages, api gateway deployments, frontend build files) - **this bucket will be created by CloudFormation**                                                                                                                            |
-| git_owner           | Username of the GitHub account which owns the GitHub code repository                                                                                                                                                                |
-| git_repo            | Name of the GitHub code repository                                                                                                                                                                                                  |
-| git_branch          | Name of the branch to be deployed (commits to this branch will trigger the CI/CD pipeline)                                                                                                                                          |
-| acm_certificate_arn | The ARN of the ACM certificate created in the [ACM configuration](<###Amazon-Certificate-Manager-(ACM)>)                                                                                                                            |
+| Parameter           | Required | Description                                                                                                                                                                                                                         |
+| ------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| stack_name          | Yes      | - Uniquely identifying name of the project <br/> - The following 3 CloudFormation stacks will be created: <br/> `${stack-name}`, `${stack-name}-api-stage`, `${stack-name}-api-prod`                                                |
+| domain              | Yes      | - Domain name of the project (e.g. example.com) <br/> - The following 4 domains are intended to become web-accessible: <br/> `https://${domain}`, `https://api.${domain}`, `https://stage.${domain}`, `https://api.stage.${domain}` |
+| project_bucket      | Yes      | Location to store project files (cloudformation packages, api gateway deployments, frontend build files) - **this bucket will be created by CloudFormation**                                                                        |
+| git_owner           | Yes      | Username of the GitHub account which owns the GitHub code repository                                                                                                                                                                |
+| git_repo            | Yes      | Name of the GitHub code repository                                                                                                                                                                                                  |
+| git_branch          | Yes      | Name of the branch to be deployed (commits to this branch will trigger the CI/CD pipeline)                                                                                                                                          |
+| acm_certificate_arn | Yes      | The ARN of the ACM certificate created in the [ACM configuration](<###Amazon-Certificate-Manager-(ACM)>)                                                                                                                            |
+| region              | No       | The [AWS region](https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints) to which the CloudFormation stack will be deployed                                                                                    |
+| profile             | No       | The [named profile](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) to use when deploying the CloudFormation stack                                                                                    |
 
 ### GitHub Access Token
 
@@ -50,5 +52,5 @@
 1. Configure the project as described in [Configuration](#Configuration)
 2. Run `./deploy.sh` in order to deploy the infrastructure for the project
 3. Run `docker-compose up --build` to launch the local dev environment
-    - Any changes made to frontend or backend code will be hot reloaded
+   - Any changes made to frontend or backend code will be hot reloaded
 4. Pushing a commit to the `git_repository_branch` will trigger a deployment to stage, and then to prod (after manual approval)
