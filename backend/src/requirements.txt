@@ -1,0 +1,2 @@
+# Boto3 is included as a dependency only for illustrative purposes
+boto3==1.11.9
