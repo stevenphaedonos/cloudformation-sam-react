@@ -1,5 +1,6 @@
 import json
 import os
+import xlrd
 
 from decorators import is_admin
 

@@ -3,12 +3,13 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.8
+      python: 3.7
     commands:
       - pip install aws-sam-cli==0.48.0
+      - pip install --target=/dependencies/python -r backend/src/requirements.txt
   pre_build:
     commands:
-      - (cd backend; sam build)
+      - (cd backend; sam build; sam package --s3-bucket=$project_bucket --s3-prefix deployments --output-template-file /tmp/template.packaged.yaml)
   build:
     commands:
-      - (cd backend; sam deploy --stack-name $api_stack_name --s3-bucket=$project_bucket --s3-prefix deployments --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvType=$stage FrontendUrl=$frontend_url BackendDomain=$backend_domain AcmCertificateArn=$acm_certificate_arn UserPoolArn=$user_pool_arn)
+      - (cd backend; sam deploy --template-file /tmp/template.packaged.yaml --stack-name $api_stack_name --s3-bucket=$project_bucket --s3-prefix deployments --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvType=$stage FrontendUrl=$frontend_url BackendDomain=$backend_domain AcmCertificateArn=$acm_certificate_arn UserPoolArn=$user_pool_arn)

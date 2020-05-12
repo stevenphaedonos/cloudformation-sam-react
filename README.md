@@ -52,5 +52,6 @@
 1. Configure the project as described in [Configuration](#Configuration)
 2. Run `./deploy.sh` in order to deploy the infrastructure for the project
 3. Run `docker-compose up --build` to launch the local dev environment
-   - Any changes made to frontend or backend code will be hot reloaded
+   - Changes to the frontend are hot reloaded
+   - The backend is re-built on each function execution
 4. Pushing a commit to the `git_repository_branch` will trigger a deployment to stage, and then to prod (after manual approval)

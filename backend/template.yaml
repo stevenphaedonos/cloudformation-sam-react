@@ -62,12 +62,20 @@ Resources:
       ResponseType: DEFAULT_5XX
       RestApiId: !Ref Api
 
+  LambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub "${AWS::StackName}-dependencies"
+      CompatibleRuntimes:
+        - python3.7
+      ContentUri: /dependencies
   UserFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handler.user
-      Runtime: python3.8
       CodeUri: ./src
+      Layers:
+        - !Ref LambdaLayer
       Environment:
         Variables:
           FRONTEND_URL: !Ref FrontendUrl
@@ -82,8 +90,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handler.admin
-      Runtime: python3.8
       CodeUri: ./src
+      Layers:
+        - !Ref LambdaLayer
       Environment:
         Variables:
           FRONTEND_URL: !Ref FrontendUrl
