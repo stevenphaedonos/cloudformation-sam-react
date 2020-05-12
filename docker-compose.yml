@@ -8,6 +8,9 @@ services:
       - basedir=$PWD/backend
       - frontend_url=http://localhost:3000
       - stack_name=$stack_name
+      - stage=dev
+      - region=$region
+      - profile=$profile
     ports:
       - "5000:5000"
     volumes:
@@ -23,6 +26,8 @@ services:
       - BROWSER=none
       - REACT_APP_BACKEND_URL=http://localhost:5000
       - stack_name=$stack_name
+      - region=$region
+      - profile=$profile
     ports:
       - "3000:3000"
     volumes:
