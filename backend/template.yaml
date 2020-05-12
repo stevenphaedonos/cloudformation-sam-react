@@ -67,6 +67,19 @@ Resources:
       ResponseType: DEFAULT_5XX
       RestApiId: !Ref Api
 
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: ["sts:AssumeRole"]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
   LambdaLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -81,6 +94,7 @@ Resources:
       CodeUri: ./src
       Layers:
         - !Ref LambdaLayer
+      Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
           FRONTEND_URL: !Ref FrontendUrl
@@ -98,6 +112,7 @@ Resources:
       CodeUri: ./src
       Layers:
         - !Ref LambdaLayer
+      Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
           FRONTEND_URL: !Ref FrontendUrl
