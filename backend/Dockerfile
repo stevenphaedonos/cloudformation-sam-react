@@ -1,7 +1,7 @@
 FROM amazonlinux:2.0.20190228
 
 RUN yum install -y gcc python3-devel.x86_64 jq
-RUN pip3 install awscli
+RUN pip3 install awscli==1.18.57 aws-sam-cli==0.48.0
 
 COPY requirements.txt ./
 RUN pip3 install -r requirements.txt
