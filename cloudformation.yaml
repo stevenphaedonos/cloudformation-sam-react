@@ -486,3 +486,9 @@ Outputs:
   CognitoIdentityPoolId:
     Description: "Cognito Identity Pool Id"
     Value: !Ref IdentityPool
+  StageFrontendDomainAlias:
+    Description: "The CloudFront distribution domain for the frontend client (stage)"
+    Value: !GetAtt FrontendStage.DomainName
+  ProdFrontendDomainAlias:
+    Description: "The CloudFront distribution domain for the frontend client (prod)"
+    Value: !GetAtt FrontendProd.DomainName

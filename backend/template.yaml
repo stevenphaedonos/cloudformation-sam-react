@@ -42,10 +42,19 @@ Resources:
           - FrontendUrl: !Ref FrontendUrl
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
         AllowCredentials: True
-      Domain:
-        CertificateArn: !Ref AcmCertificateArn
-        DomainName: !Ref BackendDomain
-        EndpointConfiguration: EDGE
+  Domain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      CertificateArn: !Ref AcmCertificateArn
+      DomainName: !Ref BackendDomain
+      EndpointConfiguration:
+        Types: ["EDGE"]
+  BasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      DomainName: !Ref Domain
+      RestApiId: !Ref Api
+      Stage: !Ref EnvType
   GatewayResponseDefault4XX:
     Type: AWS::ApiGateway::GatewayResponse
     Properties:
@@ -126,8 +135,11 @@ Resources:
 
 Outputs:
   Region:
-    Description: "Region"
+    Description: Region
     Value: !Ref AWS::Region
   ApiId:
-    Description: "API ID"
+    Description: API ID
     Value: !Ref Api
+  ApiDomainAlias:
+    Description: The CloudFront distribution domain for the API custom domain name
+    Value: !GetAtt Domain.DistributionDomainName
