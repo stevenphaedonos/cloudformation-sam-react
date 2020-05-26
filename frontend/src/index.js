@@ -8,6 +8,16 @@ import Amplify, { Auth } from "aws-amplify";
 import { Authenticator, Greetings } from "aws-amplify-react";
 import { BrowserRouter as Router } from "react-router-dom";
 
+import { CssBaseline } from "@material-ui/core";
+import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
+import blue from "@material-ui/core/colors/blue";
+
+const theme = createMuiTheme({
+  palette: {
+    primary: blue,
+  },
+});
+
 Amplify.configure({
   Auth: {
     identityPoolId: process.env.REACT_APP_IDENTITY_POOL_ID,
@@ -33,11 +43,15 @@ Amplify.configure({
 });
 
 ReactDOM.render(
-  <Router>
-    <Authenticator hide={[Greetings]}>
-      <App />
-    </Authenticator>
-  </Router>,
+  <MuiThemeProvider theme={theme}>
+    <CssBaseline />
+
+    <Router>
+      <Authenticator hide={[Greetings]}>
+        <App />
+      </Authenticator>
+    </Router>
+  </MuiThemeProvider>,
   document.getElementById("root")
 );
 

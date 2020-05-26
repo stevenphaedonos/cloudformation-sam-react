@@ -5,7 +5,6 @@ import { withRouter } from "react-router";
 
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import {
-  CssBaseline,
   AppBar,
   Toolbar,
   Hidden,
@@ -16,7 +15,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  IconButton
+  IconButton,
 } from "@material-ui/core";
 import { Menu, Dashboard, Security, ExitToApp } from "@material-ui/icons";
 
@@ -25,38 +24,39 @@ import { User, Admin } from "./components";
 export const AppContext = React.createContext();
 
 const drawerWidth = 240;
-const useStyles = makeStyles(theme => {
+const useStyles = makeStyles((theme) => {
   return {
     appBar: {
-      zIndex: theme.zIndex.drawer + 1
+      zIndex: theme.zIndex.drawer + 1,
+      background: theme.palette.primary.dark,
     },
     menuButton: {
       marginRight: theme.spacing(2),
       [theme.breakpoints.up("sm")]: {
-        display: "none"
-      }
+        display: "none",
+      },
     },
     drawer: {
       [theme.breakpoints.up("sm")]: {
         width: drawerWidth,
-        flexShrink: 0
-      }
+        flexShrink: 0,
+      },
     },
     drawerPaper: {
-      width: drawerWidth
+      width: drawerWidth,
     },
     content: {
       [theme.breakpoints.up("sm")]: {
-        marginLeft: drawerWidth
+        marginLeft: drawerWidth,
       },
       flexGrow: 1,
-      padding: theme.spacing(3)
+      padding: theme.spacing(3),
     },
-    toolbar: theme.mixins.toolbar
+    toolbar: theme.mixins.toolbar,
   };
 });
 
-const App = props => {
+const App = (props) => {
   const { authState, history } = props;
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -131,8 +131,6 @@ const App = props => {
 
   return (
     <>
-      <CssBaseline />
-
       <AppBar position="fixed" className={classes.appBar}>
         <Toolbar>
           <IconButton
@@ -157,10 +155,10 @@ const App = props => {
             open={drawerVisible}
             onClose={() => setDrawerVisible(!drawerVisible)}
             classes={{
-              paper: classes.drawerPaper
+              paper: classes.drawerPaper,
             }}
             ModalProps={{
-              keepMounted: true // Better open performance on mobile
+              keepMounted: true, // Better open performance on mobile
             }}
           >
             {drawer}
@@ -170,7 +168,7 @@ const App = props => {
         <Hidden xsDown implementation="css">
           <Drawer
             classes={{
-              paper: classes.drawerPaper
+              paper: classes.drawerPaper,
             }}
             variant="permanent"
             open
