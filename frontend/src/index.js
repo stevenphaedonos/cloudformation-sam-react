@@ -31,11 +31,16 @@ Amplify.configure({
         name: "backend",
         endpoint: process.env.REACT_APP_BACKEND_URL,
         custom_header: async () => {
-          return {
-            Authorization: (await Auth.currentSession())
-              .getIdToken()
-              .getJwtToken(),
-          };
+          try {
+            return {
+              Authorization: (await Auth.currentSession())
+                .getIdToken()
+                .getJwtToken(),
+            };
+          } catch (err) {
+            console.log(err);
+            return { Authorization: null };
+          }
         },
       },
     ],
