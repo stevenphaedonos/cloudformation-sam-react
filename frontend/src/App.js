@@ -66,14 +66,19 @@ const App = (props) => {
 
   useEffect(() => {
     const request = async () => {
-      const user = await Auth.currentSession();
-      if (authState !== "signedIn") return;
-      setIsAdmin(
-        (user["idToken"]["payload"]["cognito:groups"] || []).includes("admin")
-      );
+      if (authState === "signedIn") {
+        const user = await Auth.currentSession();
+        setUser(user["idToken"]["payload"]["cognito:username"]);
+        setIsAdmin(
+          (user["idToken"]["payload"]["cognito:groups"] || []).includes("admin")
+        );
+      } else {
+        setUser();
+        setIsAdmin(false);
+      }
     };
     request();
-  }, [authState]);
+  }, [authState, user]);
 
   if (authState !== "signedIn") return null;
 
