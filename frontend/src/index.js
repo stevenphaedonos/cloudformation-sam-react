@@ -9,14 +9,19 @@ import { Authenticator, Greetings } from "aws-amplify-react";
 import { BrowserRouter as Router } from "react-router-dom";
 
 import { CssBaseline } from "@material-ui/core";
-import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
+import {
+  MuiThemeProvider,
+  createMuiTheme,
+  responsiveFontSizes,
+} from "@material-ui/core/styles";
 import blue from "@material-ui/core/colors/blue";
 
-const theme = createMuiTheme({
+let theme = createMuiTheme({
   palette: {
     primary: blue,
   },
 });
+theme = responsiveFontSizes(theme);
 
 Amplify.configure({
   Auth: {
