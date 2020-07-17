@@ -60,6 +60,7 @@ const App = (props) => {
   const { authState, history } = props;
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState();
 
   const classes = useStyles();
   const theme = useTheme();
@@ -78,7 +79,7 @@ const App = (props) => {
       }
     };
     request();
-  }, [authState, user]);
+  }, [authState]);
 
   if (authState !== "signedIn") return null;
 
@@ -135,7 +136,7 @@ const App = (props) => {
   );
 
   return (
-    <>
+    <AppContext.Provider value={{ isAdmin, user }}>
       <AppBar position="fixed" className={classes.appBar}>
         <Toolbar>
           <IconButton
@@ -197,7 +198,7 @@ const App = (props) => {
           </Route>
         </Switch>
       </main>
-    </>
+    </AppContext.Provider>
   );
 };
 
